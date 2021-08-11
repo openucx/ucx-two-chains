@@ -761,4 +761,31 @@ typedef struct ucp_ep_params {
 #define UCP_ENTITY_NAME_MAX 32
 
 
+/**
+ * @ingroup UCP_COMM
+ * @brief UCP ifunc handle.
+ *
+ * The ifunc handle is an opaque object that is used to address a registered
+ * ifunc, filled by the @ref ucp_register_ifunc routine and released by the
+ * @ref ucp_deregister_ifunc routine.
+ */
+typedef struct ucp_ifunc    *ucp_ifunc_h;
+
+
+/**
+ * @ingroup UCP_COMM
+ * @brief UCP ifunc message container.
+ *
+ * This ifunc message container holds the buffer location and other meta data of
+ * a ifunc message frame that is allocated by the @ref ucp_ifunc_msg_create
+ * routine. It should be freed by the @ref ucp_ifunc_jsg_free routine when no
+ * longer needed.
+ */
+typedef struct ucp_ifunc_msg {
+    ucp_ifunc_h ifunc_h;
+    void* frame;
+    size_t frame_size;
+} ucp_ifunc_msg_t;
+
+
 #endif

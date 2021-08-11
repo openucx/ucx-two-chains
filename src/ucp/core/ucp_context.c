@@ -1,6 +1,6 @@
 /**
  * Copyright (C) Mellanox Technologies Ltd. 2001-2014.  ALL RIGHTS RESERVED.
- * Copyright (C) ARM Ltd. 2016.  ALL RIGHTS RESERVED.
+ * Copyright (C) ARM Ltd. 2016-2021.  ALL RIGHTS RESERVED.
  * Copyright (C) NVIDIA Corporation. 2019.  ALL RIGHTS RESERVED.
  *
  * See file LICENSE for terms.
@@ -346,6 +346,10 @@ static ucs_config_field_t ucp_config_table[] = {
    "messages and put operations, the protocol will do {put,fence,ATP} on the same\n"
    "lane without waiting for remote completion.",
    ucs_offsetof(ucp_config_t, ctx.rndv_put_force_flush), UCS_CONFIG_TYPE_BOOL},
+
+  {"IFUNC_LIB_DIR", "/usr/lib",
+   "Where to find the ifunc dynamic libraries\n",
+   ucs_offsetof(ucp_config_t, ctx.ifunc_lib_dir), UCS_CONFIG_TYPE_STRING},
 
    {NULL}
 };
@@ -844,6 +848,7 @@ const char *ucp_tl_bitmap_str(ucp_context_h context,
 static void ucp_free_resources(ucp_context_t *context)
 {
     ucp_rsc_index_t i;
+    int ifunc_idx;
 
     if (context->memtype_cache != NULL) {
         ucs_memtype_cache_destroy(context->memtype_cache);
@@ -855,6 +860,17 @@ static void ucp_free_resources(ucp_context_t *context)
     }
     ucs_free(context->tl_mds);
     ucs_free(context->tl_cmpts);
+
+    /**
+     * IFUNCTODO: This is here b/c the target process auto-registers unknown
+     * ifuncs, so they have to be auto-deregistered somewhere. I don't know if
+     * the register/deregister routines should be moved to this file and/or add
+     * 'context' to their names. Currently a simple free should be enough.
+     */
+    kh_foreach_value(context->ifuncs_map, ifunc_idx,
+                     free(context->ifuncs[ifunc_idx]));
+    kh_destroy(ifunc_map_t, context->ifuncs_map);
+
 }
 
 static ucs_status_t ucp_check_resource_config(const ucp_config_t *config)
@@ -1265,6 +1281,16 @@ static ucs_status_t ucp_fill_resources(ucp_context_h context,
         ucp_report_unavailable(&config->tls.array, tl_cfg_mask, "", "transport",
                                &avail_tls);
     }
+
+    strncpy(context->ifunc_lib_dir, context->config.ext.ifunc_lib_dir,
+            UCP_IFUNC_LIB_DIR_MAX - 1);
+    context->ifunc_lib_dir[UCP_IFUNC_LIB_DIR_MAX - 1] = 0;
+
+    for (i = 0; i < UCP_REG_IFUNC_MAX; i++) {
+        context->ifuncs[i] = NULL;
+    }
+
+    context->ifuncs_map = kh_init(ifunc_map_t);
 
     /* Validate context resources */
     status = ucp_check_resources(context, config);

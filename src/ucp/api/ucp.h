@@ -1,7 +1,7 @@
 /*
 * Copyright (C) Mellanox Technologies Ltd. 2001-2020.  ALL RIGHTS RESERVED.
 * Copyright (C) UT-Battelle, LLC. 2014-2017. ALL RIGHTS RESERVED.
-* Copyright (C) ARM Ltd. 2016-2017.  ALL RIGHTS RESERVED.
+* Copyright (C) ARM Ltd. 2016-2021.  ALL RIGHTS RESERVED.
 * Copyright (C) Los Alamos National Security, LLC. 2018 ALL RIGHTS RESERVED.
 * See file LICENSE for terms.
 */
@@ -4610,6 +4610,124 @@ typedef struct ucp_ep_attr {
  * @return Error code as defined by @ref ucs_status_t
  */
 ucs_status_t ucp_ep_query(ucp_ep_h ep, ucp_ep_attr_t *attr);
+
+
+/**
+ * @ingroup UCP_CONTEXT
+ *
+ * @brief Register an ifunc with the provided name.
+ *
+ * This routine searches the directory defined by UCX_IFUNC_LIB_DIR for an ifunc
+ * dynamic library named "(*ifunc_name).so", then it loads the library and
+ * searches for user-provided ifunc routines and then creates an ifunc handler.
+ *
+ * @param [in]  context     Handle to the UCP application context.
+ * @param [in]  ifunc_name  Name of the ifunc.
+ * @param [out] ifunc_p     A pointer to an ifunc handle.
+ *
+ * @return UCS_OK or an error if registration has failed.
+ */
+ucs_status_t ucp_register_ifunc(ucp_context_h context,
+                                const char *ifunc_name,
+                                ucp_ifunc_h *ifunc_p);
+
+
+/**
+ * @ingroup UCP_CONTEXT
+ *
+ * @brief De-registers an ifunc.
+ *
+ * @param [in] context  Handle to the UCP application context.
+ * @param [in] ifunc_h  A handle to the ifunc.
+ */
+void ucp_deregister_ifunc(ucp_context_h context, ucp_ifunc_h ifunc_h);
+
+
+/**
+ * @ingroup UCP_COMM
+ *
+ * @brief Creates an ifunc message.
+ *
+ * Creates an ifunc message with user-provided source arguments. It invokes
+ * ifunc library routines to allocate and populate a message buffer, which is
+ * ready to be sent with @ref ucp_ifunc_send_nbix when this routine returns.
+ *
+ * @param [in]  ifunc_h             A handle to the ifunc.
+ * @param [in]  source_args         Arguments needed by the ifunc library to
+ *                                  prepare the payload.
+ * @param [in]  source_args_size    Size of the arguments.
+ * @param [out] msg_p               Pointer to an ifunc message container.
+ *
+ * @return UCS_OK or an error if message creation has failed.
+ */
+ucs_status_t ucp_ifunc_msg_create(ucp_ifunc_h ifunc_h,
+                                  void *source_args,
+                                  size_t source_args_size,
+                                  ucp_ifunc_msg_t *msg_p);
+
+
+/**
+ * @ingroup UCP_COMM
+ *
+ * @brief Frees an ifunc message container.
+ *
+ * @param [in] msg  An ifunc message container.
+ */
+void ucp_ifunc_msg_free(ucp_ifunc_msg_t msg);
+
+
+/**
+ * @ingroup UCP_COMM
+ *
+ * @brief Sends an ifunc message.
+ *
+ * This routine initiates a storage of an ifunc message that is described by the
+ * ifunc message container @a msg, to the remote continuous memory region
+ * described by @a remote_addr and @a rkey. This routine returns immediately and
+ * does not guarantee the completion of the storage operation, so @a msg may not
+ * be freed right after.
+ *
+ * @param [in]  ep          Remote endpoint handle.
+ * @param [in]  msg         ifunc message to be stored to remote memory.
+ * @param [in]  remote_addr Pointer to the destination remote memory address to
+ *                          write to.
+ * @param [in]  rkey        Remote memory key associated with the remote memory
+ *                          address.
+ *
+ * @return Error code as defined by @ref ucs_status_t
+ */
+ucs_status_t ucp_ifunc_send_nbix(ucp_ep_h ep,
+                                 ucp_ifunc_msg_t msg,
+                                 uint64_t remote_addr,
+                                 ucp_rkey_h rkey);
+
+
+/**
+ * @ingroup UCP_COMM
+ *
+ * @brief Check for and execute incoming ifunc message.
+ *
+ * This routine checks a buffer for a newly received ifunc message, it returns
+ * immediately if no message has arrived, or executes the received message with
+ * its payload and the local argument pointer @a target_args.
+ * The user should make sure that the buffer is mapped by @ref ucp_mem_map, has
+ * rwx permissions, and is large enough for incoming messages.
+ *
+ * @param [in] context      Handle to the UCP application context.
+ * @param [in] buffer       Points to the ifunc message buffer.
+ * @param [in] buffer_size  Size of the ifunc message buffer.
+ * @param [in] target_args  Points to local arguments, will be passed to every
+ *                          ifunc main function invoked by this routine.
+ *
+ * @return Error code as defined by @ref ucs_status_t
+ *
+ * @note This fuction auto-registers unknown ifuncs using names contained in the
+ *       message.
+ */
+ucs_status_t ucp_poll_ifunc(ucp_context_h context,
+                            void *buffer,
+                            size_t buffer_size,
+                            void *target_args);
 
 
 /**

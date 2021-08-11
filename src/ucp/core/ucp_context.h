@@ -1,6 +1,6 @@
 /**
  * Copyright (C) Mellanox Technologies Ltd. 2001-2015.  ALL RIGHTS RESERVED.
- * Copyright (C) ARM Ltd. 2016.  ALL RIGHTS RESERVED.
+ * Copyright (C) ARM Ltd. 2016-2021.  ALL RIGHTS RESERVED.
  * Copyright (C) Advanced Micro Devices, Inc. 2019. ALL RIGHTS RESERVED.
  *
  * See file LICENSE for terms.
@@ -17,6 +17,7 @@
 #include <ucp/dt/dt.h>
 #include <ucp/proto/proto.h>
 #include <uct/api/uct.h>
+#include <ucs/datastruct/khash.h>
 #include <ucs/datastruct/mpool.h>
 #include <ucs/datastruct/queue_types.h>
 #include <ucs/datastruct/bitmap.h>
@@ -24,6 +25,9 @@
 #include <ucs/type/spinlock.h>
 #include <ucs/sys/string.h>
 #include <ucs/type/param.h>
+
+
+KHASH_MAP_INIT_STR(ifunc_map_t, int);
 
 
 enum {
@@ -119,6 +123,8 @@ typedef struct ucp_context_config {
     unsigned                               reg_whole_alloc_bitmap;
     /** Always use flush operation in rendezvous put */
     int                                    rndv_put_force_flush;
+    /** Where to find ifunc dynamic libraries */
+    char                                   *ifunc_lib_dir;
 } ucp_context_config_t;
 
 
@@ -264,6 +270,15 @@ typedef struct ucp_context {
     ucp_mt_lock_t                 mt_lock;
 
     char                          name[UCP_ENTITY_NAME_MAX];
+
+    /* Where to find ifunc dynamic libraries */
+    char                          ifunc_lib_dir[UCP_IFUNC_LIB_DIR_MAX];
+
+    /* Array of all registered ifunc handlers */
+    ucp_ifunc_h                   ifuncs[UCP_REG_IFUNC_MAX];
+
+    /* Map an ifunc name to the index in the array of all registered ifuncs */
+    khash_t(ifunc_map_t)          *ifuncs_map;
 
 } ucp_context_t;
 

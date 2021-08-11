@@ -1,5 +1,6 @@
 /**
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017.  ALL RIGHTS RESERVED.
+ * Copyright (C) ARM Ltd. 2016-2021.  ALL RIGHTS RESERVED.
  *
  * See file LICENSE for terms.
  */
@@ -196,6 +197,29 @@ typedef void (*ucp_am_tracer_t)(ucp_worker_h worker, uct_am_trace_type_t type,
  * Internal callback for UCP requests
  */
 typedef void (*ucp_request_callback_t)(ucp_request_t *req);
+
+
+/* IFUNCTODO: better place for these? */
+/* Max length of the ifunc's name */
+#define UCP_IFUNC_NAME_MAX      8
+
+/**
+ * Max length of the symbol name that can be pulled from an ifunc library.
+ * Currently the longest suffix is _payload_get_max_size_f
+ */
+#define UCP_IFUNC_SYMBOL_MAX    (UCP_IFUNC_NAME_MAX + 25)
+
+/* Max length of the ifunc dynamic library directory name */
+#define UCP_IFUNC_LIB_DIR_MAX   256
+
+/**
+ * Max length of the ifunc dynamic library full file name.
+ * (dir + / + name + .so + \0)
+ */
+#define UCP_IFUNC_FILE_NAME_MAX (UCP_IFUNC_LIB_DIR_MAX + UCP_IFUNC_NAME_MAX + 5)
+
+/* Max number of ifuncs that can be registered */
+#define UCP_REG_IFUNC_MAX       32
 
 
 #endif

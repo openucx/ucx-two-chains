@@ -2,6 +2,7 @@
 # Copyright (C) Mellanox Technologies Ltd. 2001-2021.  ALL RIGHTS RESERVED.
 # Copyright (c) UT-Battelle, LLC. 2017. ALL RIGHTS RESERVED.
 # Copyright (C) Los Alamos National Security, LLC. 2019. ALL RIGHTS RESERVED.
+# Copyright (C) ARM Ltd. 2016-2021.  ALL RIGHTS RESERVED.
 # See file LICENSE for terms.
 #
 
@@ -43,6 +44,7 @@ noinst_HEADERS = \
 	dt/dt_contig.h \
 	dt/dt_iov.h \
 	dt/dt_generic.h \
+	ifunc/ifunc.h \
 	proto/lane_type.h \
 	proto/proto_am.h \
 	proto/proto_am.inl \
@@ -103,6 +105,7 @@ libucp_la_SOURCES = \
 	dt/dt_iov.c \
 	dt/dt_generic.c \
 	dt/dt.c \
+	ifunc/ifunc.c \
 	proto/lane_type.c \
 	proto/proto_am.c \
 	proto/proto_common.c \
